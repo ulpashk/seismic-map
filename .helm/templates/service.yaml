@@ -13,4 +13,3 @@ spec:
       name: http
   selector:
     {{- include ".helm.selectorLabels" . | nindent 4 }}
-
