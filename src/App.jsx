@@ -4,8 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainPage from "./page/MainPage";
 import Header from "./components/HeaderNewV";
 import InfraPage from "./page/InfraPage";
-import AnalyticsPage from "./page/AnalyticsPage";
-import RecomendPage from "./page/RecomendPage";
 
 function App() {
   const [activeLayer, setActiveLayer] = useState("building");
@@ -39,22 +37,6 @@ function App() {
                 activeLayer={activeLayer}
                 setActiveLayer={setActiveLayer}
               />
-            }
-          />
-          <Route
-            path="/analytics"
-            element={
-              <div className="pt-16 h-full overflow-auto">
-                <AnalyticsPage />
-              </div>
-            }
-          />
-          <Route
-            path="/recommendations"
-            element={
-              <div className="pt-16 h-full overflow-auto">
-                <RecomendPage />
-              </div>
             }
           />
         </Routes>

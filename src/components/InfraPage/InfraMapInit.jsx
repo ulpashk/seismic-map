@@ -962,21 +962,6 @@ export default function InfraMap({
             );
           })}
         </div>
-        {(loading || error) && (
-          <div className="mt-2 md:mt-0 md:ml-3 bg-white/80 backdrop-blur-sm px-2 py-1 rounded-md shadow-sm border border-gray-100">
-            {loading && (
-              <div className="text-[10px] md:text-sm text-gray-500 flex items-center">
-                <span className="inline-block animate-spin mr-1.5">◌</span>
-                Загрузка...
-              </div>
-            )}
-            {error && (
-              <div className="text-[10px] md:text-sm text-red-600">
-                {error}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Map Container */}

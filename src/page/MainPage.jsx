@@ -2,7 +2,6 @@ import { useState } from "react";
 import MapGeoRisk from "../components/MainPage/MapGeoRiskG";
 import MapFilters from "../components/MainPage/MapFilters";
 import HeatMapPopulation from "../components/MainPage/HeatMapPopulation";
-// import GeoRiskFilter from "../components/MainPage/GeoRiskFilter";
 
 export default function MainPage({ mainPageTab, setMainPageTab }) {
   const districts = [
@@ -95,41 +94,11 @@ export default function MainPage({ mainPageTab, setMainPageTab }) {
     {
       key: "geo-risk",
       name: "Гео-риски",
-    },
-    {
-      key: "heat-map",
-      name: "Тепловая карта населения",
-    },
+    }
   ];
 
   return (
     <div className="relative w-full h-screen">
-      {/* Layer Switcher - Адаптированный под правую сторону и вертикальный вид */}
-      <div className="absolute top-20 right-2 sm:right-4 md:right-auto md:left-1/2 md:-translate-x-1/2 z-20 transition-all duration-300">
-        <div className="flex flex-col md:flex-row gap-1.5 md:gap-2 items-end md:items-center">
-          {tabsConfig.map((tab) => {
-            const isActive = mainPageTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setMainPageTab(tab.key)}
-                className={`
-                  px-2 py-1.5 rounded-md text-[10px] font-medium transition-all shadow-md border
-                  flex items-center justify-center min-w-[100px] text-center
-                  md:px-4 md:py-2 md:text-xs md:min-w-0
-                  ${
-                    isActive
-                      ? "bg-blue-600 text-white border-blue-600 ring-2 ring-blue-600/20"
-                      : "bg-white/90 backdrop-blur-sm text-gray-700 border-gray-200 hover:bg-white"
-                  }
-                `}
-              >
-                {tab.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Tab Content */}
       {mainPageTab === "geo-risk" ? (
