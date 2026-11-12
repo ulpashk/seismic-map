@@ -1,5 +1,86 @@
 import { useState } from "react";
 
+const CATEGORY_LABELS = {
+  mudflow: "Сели",
+  landslide: "Оползни",
+  fault: "Разломы",
+};
+
+const RISK_LABELS = {
+  high: "Высокий",
+  medium: "Средний",
+  low: "Низкий",
+};
+
+const ENGINEERING_LABELS = {
+  "ИКТ инфраструктура города": "ИКТ инфраструктура",
+};
+
+const SOCIAL_LABELS = {
+  ДДО: "Детские сады",
+};
+
+function Chevron({ expanded }) {
+  return (
+    <svg
+      className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${
+        expanded ? "rotate-180" : ""
+      }`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 9l-7 7-7-7"
+      />
+    </svg>
+  );
+}
+
+function FilterSection({ section, expanded, onToggle }) {
+  return (
+    <section className="border-b border-gray-200 last:border-b-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-2 py-3 text-left hover:text-blue-700"
+      >
+        <span className="text-[10px] font-medium sm:text-xs md:text-sm">
+          {section.title}
+        </span>
+        <Chevron expanded={expanded} />
+      </button>
+
+      {expanded && (
+        <div className="space-y-0.5 pb-3">
+          {section.options.map((option) => (
+            <label
+              key={option.key}
+              className="flex cursor-pointer items-center gap-2 rounded p-1 text-[10px] hover:bg-gray-50 sm:text-xs"
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(option.checked)}
+                onChange={(event) => option.onChange(event.target.checked)}
+                className="h-3 w-3 shrink-0 accent-blue-600"
+              />
+              <span className="min-w-0 break-words">
+                <span className="mr-1 text-gray-400">|</span>
+                {option.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function MapFilters({
   districts = [],
   filters = { districts: [], riskLevels: {}, categories: {} },
@@ -7,15 +88,27 @@ export default function MapFilters({
   toggleCategory = () => {},
   selectDistrict = () => {},
   resetToAllDistricts = () => {},
+  riskClassFilter,
+  setRiskClassFilter,
+  enginNodes,
+  setEnginNodes,
+  socialCategories,
+  setSocialCategories,
 }) {
   const [filtersHidden, setFiltersHidden] = useState(false);
   const [districtDropdownOpen, setDistrictDropdownOpen] = useState(false);
   const [openSections, setOpenSections] = useState({
     categories: true,
     riskLevels: true,
+    buildingRisk: true,
+    engineering: true,
+    social: true,
   });
 
+  const selectedDistricts = filters.districts ?? [];
   const allDistricts = ["Все районы", ...districts];
+  const selectedDistrictsDisplay =
+    selectedDistricts.length === 0 ? "Все районы" : selectedDistricts.join(", ");
 
   const handleDistrictChange = (district) => {
     if (district === "Все районы") {
@@ -25,126 +118,164 @@ export default function MapFilters({
     }
   };
 
-  const toggleSection = (section) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  const toggleSection = (id) => {
+    setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Вспомогательный компонент для меток с адаптивным размером
-  const labelWithArrow = (children) => (
-    <span className="flex items-center space-x-1 truncate">
-      <span className="text-gray-400">|</span>
-      <span className="truncate">{children}</span>
-    </span>
-  );
-
-  const selectedDistrictsDisplay =
-    filters.districts.length === 0 ? ["Все районы"] : filters.districts;
+  const sections = [
+    {
+      id: "categories",
+      title: "Категории рисков:",
+      options: Object.entries(filters.categories ?? {}).map(([key, enabled]) => ({
+        key,
+        label: CATEGORY_LABELS[key] ?? "Разломы",
+        checked: enabled,
+        onChange: () => toggleCategory(key),
+      })),
+    },
+    {
+      id: "riskLevels",
+      title: "Уровни риска:",
+      options: Object.entries(filters.riskLevels ?? {}).map(([key, enabled]) => ({
+        key,
+        label: RISK_LABELS[key] ?? "Низкий",
+        checked: enabled,
+        onChange: () => toggleRiskLevel(key),
+      })),
+    },
+    ...(riskClassFilter && setRiskClassFilter
+      ? [
+          {
+            id: "buildingRisk",
+            title: "Класс риска зданий:",
+            options: [
+              {
+                key: "showHighRisk",
+                label: "Высокий риск (D, E)",
+                checked: riskClassFilter.showHighRisk,
+                onChange: (checked) =>
+                  setRiskClassFilter((prev) => ({ ...prev, showHighRisk: checked })),
+              },
+              {
+                key: "showLowRisk",
+                label: "Низкий риск (A, B, C)",
+                checked: riskClassFilter.showLowRisk,
+                onChange: (checked) =>
+                  setRiskClassFilter((prev) => ({ ...prev, showLowRisk: checked })),
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(enginNodes && setEnginNodes
+      ? [
+          {
+            id: "engineering",
+            title: "Инженерные узлы:",
+            options: Object.entries(enginNodes).map(([key, enabled]) => ({
+              key,
+              label: ENGINEERING_LABELS[key] ?? key,
+              checked: enabled,
+              onChange: (checked) =>
+                setEnginNodes((prev) => ({ ...prev, [key]: checked })),
+            })),
+          },
+        ]
+      : []),
+    ...(socialCategories && setSocialCategories
+      ? [
+          {
+            id: "social",
+            title: "Социальные объекты:",
+            options: Object.entries(socialCategories).map(([key, enabled]) => ({
+              key,
+              label: SOCIAL_LABELS[key] ?? key,
+              checked: enabled,
+              onChange: (checked) =>
+                setSocialCategories((prev) => ({ ...prev, [key]: checked })),
+            })),
+          },
+        ]
+      : []),
+  ];
 
   return (
-    /* 
-       Адаптивная ширина: 
-       - По умолчанию (самые маленькие): w-60 (240px)
-       - Маленькие экраны (sm): w-72 (288px)
-       - Средние (md): w-80 (320px)
-    */
-    <div className="absolute top-[80px] left-2 md:left-4 z-20 w-60 sm:w-72 md:w-80 transition-all duration-300">
-      <div className="flex flex-col max-h-[60vh] md:max-h-[80vh] bg-white/95 backdrop-blur-sm rounded-lg md:rounded-xl border shadow-md overflow-hidden">
-        
-        {/* Шапка */}
-        <div className="sticky top-0 z-20 bg-white border-b">
-          <div className="flex items-center justify-between px-2 md:px-4 py-2 font-semibold text-sm sm:text-base md:text-base">
+    <div className="absolute left-2 top-8 z-20 w-60 transition-all duration-300 sm:w-72 md:left-4 md:w-80">
+      <div className="flex max-h-[calc(100dvh-96px)] flex-col overflow-hidden rounded-lg border bg-white/95 shadow-md backdrop-blur-sm md:rounded-xl">
+        <div className="shrink-0 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between px-2 py-2 font-semibold sm:text-base md:px-4">
             <span>Фильтры</span>
             <button
-              onClick={() => setFiltersHidden(!filtersHidden)}
-              className="p-1 hover:bg-gray-100 rounded"
+              type="button"
+              aria-label={filtersHidden ? "Развернуть фильтры" : "Свернуть фильтры"}
+              aria-expanded={!filtersHidden}
+              onClick={() => {
+                setFiltersHidden((prev) => !prev);
+                setDistrictDropdownOpen(false);
+              }}
+              className="rounded p-1 hover:bg-gray-100"
             >
-              <svg
-                className={`w-3.5 h-3.5 md:w-4 md:h-4 transform transition-transform ${filtersHidden ? "" : "rotate-180"}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <Chevron expanded={!filtersHidden} />
             </button>
           </div>
 
-          {/* Селектор района */}
-          <div className="px-2 md:px-4 pb-2">
-            <div className="relative">
-              <div
-                onClick={() => setDistrictDropdownOpen(!districtDropdownOpen)}
-                className="flex items-center justify-between px-2 py-1 md:py-1.5 border rounded md:rounded-md text-[10px] sm:text-xs md:text-sm cursor-pointer hover:bg-gray-50"
-              >
-                <span className="flex-1 truncate mr-1">
-                  {selectedDistrictsDisplay.join(", ")}
-                </span>
-                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+          {!filtersHidden && (
+            <div className="px-2 pb-2 md:px-4">
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-expanded={districtDropdownOpen}
+                  onClick={() => setDistrictDropdownOpen((prev) => !prev)}
+                  className="flex w-full items-center justify-between gap-2 rounded border px-2 py-1 text-left text-[10px] hover:bg-gray-50 sm:text-xs md:rounded-md md:py-1.5 md:text-sm"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {selectedDistrictsDisplay}
+                  </span>
+                  <Chevron expanded={districtDropdownOpen} />
+                </button>
 
-              {districtDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded shadow-lg z-30 max-h-40 overflow-y-auto">
-                  <div className="p-1 space-y-0.5 text-[10px] sm:text-xs">
+                {districtDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-40 overflow-y-auto rounded border bg-white p-1 shadow-lg">
                     {allDistricts.map((district) => (
-                      <label key={district} className="flex items-center space-x-1.5 p-1.5 hover:bg-blue-50 rounded cursor-pointer">
+                      <label
+                        key={district}
+                        className="flex cursor-pointer items-center gap-2 rounded p-1.5 text-[10px] hover:bg-blue-50 sm:text-xs"
+                      >
                         <input
                           type="checkbox"
-                          checked={district === "Все районы" ? filters.districts.length === 0 : filters.districts.includes(district)}
+                          checked={
+                            district === "Все районы"
+                              ? selectedDistricts.length === 0
+                              : selectedDistricts.includes(district)
+                          }
                           onChange={() => handleDistrictChange(district)}
-                          className="h-3 w-3 text-blue-600 rounded"
+                          className="h-3 w-3 shrink-0 accent-blue-600"
                         />
-                        {labelWithArrow(district)}
+                        <span className="min-w-0 truncate">
+                          <span className="mr-1 text-gray-400">|</span>
+                          {district}
+                        </span>
                       </label>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Контент фильтров (Сворачиваемый) */}
-        <div className={`transition-all duration-300 ${filtersHidden ? "max-h-0 opacity-0" : "max-h-[400px] opacity-100"}`}>
-          <div className="px-2 md:px-4 pb-3 overflow-y-auto divide-y divide-gray-50">
-            
-            {/* Секция Категории */}
-            <div className="py-2 border-b">
-              <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleSection("categories")}>
-                <h3 className="font-medium text-[10px] sm:text-xs md:text-sm">Категории рисков:</h3>
-                <span className="text-[10px] text-gray-400">{openSections.categories ? "▼" : "▶"}</span>
-              </div>
-              {openSections.categories && (
-                <div className="mt-1 space-y-0.5">
-                  {Object.entries(filters.categories).map(([key, enabled]) => (
-                    <label key={key} className="flex items-center space-x-1.5 p-1 hover:bg-gray-50 rounded text-[10px] sm:text-xs cursor-pointer">
-                      <input type="checkbox" checked={enabled} onChange={() => toggleCategory(key)} className="h-3 w-3" />
-                      {labelWithArrow(key === "mudflow" ? "Сели" : key === "landslide" ? "Оползни" : "Разломы")}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Секция Уровни риска */}
-            <div className="py-2">
-              <div className="flex justify-between items-center cursor-pointer" onClick={() => toggleSection("riskLevels")}>
-                <h3 className="font-medium text-[10px] sm:text-xs md:text-sm">Уровни риска:</h3>
-                <span className="text-[10px] text-gray-400">{openSections.riskLevels ? "▼" : "▶"}</span>
-              </div>
-              {openSections.riskLevels && (
-                <div className="mt-1 space-y-0.5">
-                  {Object.entries(filters.riskLevels).map(([key, enabled]) => (
-                    <label key={key} className="flex items-center space-x-1.5 p-1 hover:bg-gray-50 rounded text-[10px] sm:text-xs cursor-pointer">
-                      <input type="checkbox" checked={enabled} onChange={() => toggleRiskLevel(key)} className="h-3 w-3" />
-                      {labelWithArrow(key === "high" ? "Высокий" : key === "medium" ? "Средний" : "Низкий")}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-
+        {!filtersHidden && (
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2 md:px-4">
+            {sections.map((section) => (
+              <FilterSection
+                key={section.id}
+                section={section}
+                expanded={openSections[section.id]}
+                onToggle={() => toggleSection(section.id)}
+              />
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

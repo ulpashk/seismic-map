@@ -56,11 +56,11 @@ export default class SocialIconLayer extends CompositeLayer {
       getIcon: d => {
         const cat = d.properties.category;
         const iconUrl =
-          cat === "Школы" ? "/icons/school.png" :
-          cat === "ПППН" ? "/icons/pppn.png" :
-          cat === "Больницы" ? "/icons/health.png" :
-          cat === "ДДО" ? "/icons/ddo.png" :
-          "/icons/default.png";
+          cat === "Школы" ? `${process.env.PUBLIC_URL}/icons/school.png` :
+          cat === "ПППН" ? `${process.env.PUBLIC_URL}/icons/pppn.png` :
+          cat === "Больницы" ? `${process.env.PUBLIC_URL}/icons/health.png` :
+          cat === "ДДО" ? `${process.env.PUBLIC_URL}/icons/ddo.png` :
+          `${process.env.PUBLIC_URL}/icons/default.png`;
         return { url: iconUrl, width: 32, height: 32, anchorY: 40, anchorX: 40 };
       },
       sizeScale: 3.5,

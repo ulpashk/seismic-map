@@ -3,7 +3,17 @@ import MapGeoRisk from "../components/MainPage/MapGeoRiskG";
 import MapFilters from "../components/MainPage/MapFilters";
 import HeatMapPopulation from "../components/MainPage/HeatMapPopulation";
 
-export default function MainPage({ mainPageTab, setMainPageTab }) {
+export default function MainPage({ 
+  mainPageTab, 
+  setMainPageTab, 
+  onMapReady,
+  riskClassFilter,
+  setRiskClassFilter, 
+  enginNodes,
+  setEnginNodes,
+  socialCategories,
+  setSocialCategories,
+}) {
   const districts = [
     "Алатауский",
     "Алмалинский",
@@ -104,6 +114,10 @@ export default function MainPage({ mainPageTab, setMainPageTab }) {
       {mainPageTab === "geo-risk" ? (
         <>
           <MapGeoRisk
+            onMapReady={onMapReady}
+            enginNodes={enginNodes}
+            socialCategories={socialCategories}
+            riskClassFilter={riskClassFilter}
             // Constants
             districts={districts}
             districtCoordinates={districtCoordinates}
@@ -125,17 +139,20 @@ export default function MainPage({ mainPageTab, setMainPageTab }) {
           />
 
           <MapFilters
-            // Constants
             districts={districts}
             riskLabelMap={riskLabelMap}
             categoryLabelMap={categoryLabelMap}
-            // State
             filters={filters}
-            // Handlers
             toggleRiskLevel={toggleRiskLevel}
             toggleCategory={toggleCategory}
             selectDistrict={selectDistrict}
             resetToAllDistricts={resetToAllDistricts}
+            riskClassFilter={riskClassFilter}
+            setRiskClassFilter={setRiskClassFilter}
+            enginNodes={enginNodes}
+            setEnginNodes={setEnginNodes}
+            socialCategories={socialCategories}
+            setSocialCategories={setSocialCategories}
           />
         </>
       ) : (

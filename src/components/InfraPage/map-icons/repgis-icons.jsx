@@ -73,12 +73,13 @@ export default class RepgisIconLayer extends CompositeLayer {
       getIcon: d => {
         const cat = d.properties.cat_name;
         const iconUrl =
-          cat === "Канализация" ? "/icons/sewer.png" :
-          cat === "ИКТ инфраструктура города" ? "/icons/ict.png" :
-          cat === "Электроснабжение" ? "/icons/electricity.png" :
-          cat === "Теплоснабжение" ? "/icons/heat.png" :
-          cat === "Газоснабжение" ? "/icons/gas.png" :
-          "/icons/default.png";
+          cat === "Канализация" ? `${process.env.PUBLIC_URL}/icons/sewer.png` :
+          cat === "ИКТ инфраструктура города" ? `${process.env.PUBLIC_URL}/icons/ict.png` :
+          cat === "Электроснабжение" ? `${process.env.PUBLIC_URL}/icons/electricity.png` :
+          cat === "Теплоснабжение" ? `${process.env.PUBLIC_URL}/icons/heat.png` :
+          cat === "Газоснабжение" ? `${process.env.PUBLIC_URL}/icons/gas.png` :
+          `${process.env.PUBLIC_URL}/icons/default.png`;
+
         return { url: iconUrl, width: 32, height: 32, anchorY: 40, anchorX: 40 };
       },
       sizeScale: 3.5,
