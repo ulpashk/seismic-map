@@ -38,7 +38,6 @@ const populationStats = [
 const formatNumber = (value) =>
   new Intl.NumberFormat("ru-RU").format(value);
 
-
 function useSeismicStatistics() {
   const [stats, setStats] = useState({
     total: null,
@@ -215,75 +214,91 @@ export default function MapLegend({
   const selectedEngin = enginLegend.filter(
     (item) => enginNodes[item.key]
   );
+  const [isLegendOpen, setIsLegendOpen] = useState(true);
 
   return (
     <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20 w-[260px] max-w-[calc(100vw-24px)] bg-white/95 backdrop-blur-md rounded-xl border border-gray-200 shadow-xl pointer-events-auto">
-      <div className="px-3 py-3">
-        <h4 className="text-sm font-bold text-gray-900">
+      <button
+        type="button"
+        onClick={() => setIsLegendOpen((prev) => !prev)}
+        aria-expanded={isLegendOpen}
+        className="w-full flex items-center justify-between px-3 py-3 text-left"
+      >
+        <span className="text-sm font-bold text-gray-900">
           Легенда карты
-        </h4>
+        </span>
 
-        <div className="max-h-[50vh] overflow-y-auto pr-1">
-          <LegendSection title="Уровень риска">
-            <div className="w-full h-3 rounded bg-gradient-to-r from-green-500 via-yellow-500 to-red-500" />
-            <div className="flex justify-between text-[10px] text-gray-600">
-              <span>Низкий</span>
-              <span>Высокий</span>
-            </div>
-          </LegendSection>
+        {isLegendOpen ? (
+          <ChevronUp size={18} className="text-gray-400" />
+        ) : (
+          <ChevronDown size={18} className="text-gray-400" />
+        )}
+      </button>
 
-          <LegendSection title="Категории рисков">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-1 bg-blue-400 rounded" />
-              <span className="text-[11px] text-gray-700">Сель</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="w-6 flex items-center gap-1">
-                <span className="w-3 h-1 bg-orange-400" />
-                <span className="w-2 h-2 bg-orange-400 rounded-full" />
-              </span>
-              <span className="text-[11px] text-gray-700">Оползни</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-4 rounded bg-red-400/50 border border-red-400" />
-              <span className="text-[11px] text-gray-700">Разломы</span>
-            </div>
-          </LegendSection>
-
-          <LegendSection title="Риск зданий">
-            {buildingLegend.map((item) => (
-              <div key={item.label} className="flex items-start gap-2">
-                <span
-                  className="w-3.5 h-3.5 mt-0.5 rounded-sm shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-[11px] leading-snug text-gray-700">
-                  {item.label}
-                </span>
+      {isLegendOpen && (
+        <div className="px-3 pb-3">
+          <div className="max-h-[50vh] overflow-y-auto pr-1">
+            <LegendSection title="Уровень риска">
+              <div className="w-full h-3 rounded bg-gradient-to-r from-green-500 via-yellow-500 to-red-500" />
+              <div className="flex justify-between text-[10px] text-gray-600">
+                <span>Низкий</span>
+                <span>Высокий</span>
               </div>
-            ))}
-          </LegendSection>
+            </LegendSection>
 
-          {selectedEngin.length > 0 && (
-            <LegendSection title="Инженерные узлы">
-              {selectedEngin.map((item) => (
-                <IconLegendItem key={item.key} item={item} />
+            <LegendSection title="Категории рисков">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-1 bg-blue-400 rounded" />
+                <span className="text-[11px] text-gray-700">Сель</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="w-6 flex items-center gap-1">
+                  <span className="w-3 h-1 bg-orange-400" />
+                  <span className="w-2 h-2 bg-orange-400 rounded-full" />
+                </span>
+                <span className="text-[11px] text-gray-700">Оползни</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-4 rounded bg-red-400/50 border border-red-400" />
+                <span className="text-[11px] text-gray-700">Разломы</span>
+              </div>
+            </LegendSection>
+
+            <LegendSection title="Риск зданий">
+              {buildingLegend.map((item) => (
+                <div key={item.label} className="flex items-start gap-2">
+                  <span
+                    className="w-3.5 h-3.5 mt-0.5 rounded-sm shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-[11px] leading-snug text-gray-700">
+                    {item.label}
+                  </span>
+                </div>
               ))}
             </LegendSection>
-          )}
 
-          {selectedSocial.length > 0 && (
-            <LegendSection title="Социальные объекты">
-              {selectedSocial.map((item) => (
-                <IconLegendItem key={item.key} item={item} />
-              ))}
-            </LegendSection>
-          )}
+            {selectedEngin.length > 0 && (
+              <LegendSection title="Инженерные узлы">
+                {selectedEngin.map((item) => (
+                  <IconLegendItem key={item.key} item={item} />
+                ))}
+              </LegendSection>
+            )}
+
+            {selectedSocial.length > 0 && (
+              <LegendSection title="Социальные объекты">
+                {selectedSocial.map((item) => (
+                  <IconLegendItem key={item.key} item={item} />
+                ))}
+              </LegendSection>
+            )}
+          </div>
+          <SeismicStatistics />
         </div>
-        <SeismicStatistics />
-      </div>
+      )}
     </div>
   );
 }
