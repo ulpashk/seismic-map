@@ -6,7 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import SeismicMapDashboard from "./modules/seismic-map/SeismicMapDashboard";
+import SeismicMapDashboard from "./SeismicMapDashboard";
 
 function App() {
   return (

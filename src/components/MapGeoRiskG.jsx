@@ -16,6 +16,7 @@ export default function GeoRiskMapDashboard({
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const overlayRef = useRef(null);
+  const lastGeoRiskTileUrlRef = useRef(null);
   const isFirstRender = useRef(true);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [geoStructsLoaded, setGeoStructsLoaded] = useState(false);
@@ -288,7 +289,7 @@ export default function GeoRiskMapDashboard({
     console.log(
       "🔄 Style changed, layers will be recreated automatically in correct order"
     );
-  }, [mapStyle, mapLoaded, buildQuery]);
+  }, [mapStyle, mapLoaded]);
 
   const addGeoStructLayers = useCallback(
     (map) => {
@@ -526,11 +527,6 @@ export default function GeoRiskMapDashboard({
     const map = mapRef.current;
 
     const addGeoRiskLayer = () => {
-      // if (!map.isStyleLoaded()) {
-      //   console.log("⏳ Style not ready, retrying...");
-      //   setTimeout(addGeoRiskLayer, 100);
-      //   return;
-      // }
 
       const startTime = performance.now();
 
@@ -554,6 +550,7 @@ export default function GeoRiskMapDashboard({
         minzoom: 0,
         maxzoom: 14,
       });
+      lastGeoRiskTileUrlRef.current = tileUrl;
 
       const firstGeoStructLayer = map.getLayer("fault-fill")
         ? "fault-fill"
@@ -634,6 +631,21 @@ export default function GeoRiskMapDashboard({
     const map = mapRef.current;
     const src = map.getSource("geoRisk");
 
+
+console.log("🔍 GeoRisk diagnostics:", {
+  selectedDistricts: filters.districts,
+  sourceExists: !!src,
+  tileUrls: src?.tiles,
+  layerExists: !!map.getLayer("geoRisk-fill"),
+  visibility: map.getLayer("geoRisk-fill")
+    ? map.getLayoutProperty("geoRisk-fill", "visibility")
+    : "layer missing",
+  filter: map.getLayer("geoRisk-fill")
+    ? map.getFilter("geoRisk-fill")
+    : null,
+});
+
+
     if (!src) {
       console.log("⚠️ geoRisk source not found for tile update");
       return;
@@ -641,16 +653,23 @@ export default function GeoRiskMapDashboard({
 
     const newTileUrl = `${PBF_BASE_URL}${buildDistrictQuery()}`;
     
-    const currentUrls = src.tiles || [];
-    if (currentUrls.length > 0 && currentUrls[0] === newTileUrl) {
-      return;
-    }
+      
+  if (lastGeoRiskTileUrlRef.current === newTileUrl) {
+    console.log("⏭️ GeoRisk tile URL unchanged, skipping update");
+    return;
+  }
 
-    console.log("🔄 Updating PBF tile URL for district filter:", newTileUrl);
-    console.log("🔄 Selected districts:", filters.districts);
+  lastGeoRiskTileUrlRef.current = newTileUrl;
 
+  console.log("🔄 Updating GeoRisk PBF:", newTileUrl);
+
+  try {
     src.setTiles([newTileUrl]);
-    map.triggerRepaint();
+  } catch (error) {
+    lastGeoRiskTileUrlRef.current = null;
+    console.error("Failed to update GeoRisk tiles:", error);
+  }
+
   }, [filters.districts, mapLoaded, PBF_BASE_URL, buildDistrictQuery]);
 
   useEffect(() => {

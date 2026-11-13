@@ -101,8 +101,8 @@ export default function MapFilters({
     categories: true,
     riskLevels: true,
     buildingRisk: true,
-    engineering: true,
-    social: true,
+    engineering: false,
+    social: false,
   });
 
   const selectedDistricts = filters.districts ?? [];

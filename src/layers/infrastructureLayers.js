@@ -1,6 +1,5 @@
-
-import SocialIconLayer from "../../../components/InfraPage/map-icons/social-icons";
-import RepgisIconLayer from "../../../components/InfraPage/map-icons/repgis-icons";
+import SocialIconLayer from "./social-icons";
+import RepgisIconLayer from "./repgis-icons";
 
 const URLS = {
   social:

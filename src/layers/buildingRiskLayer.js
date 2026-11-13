@@ -43,12 +43,30 @@ export function addBuildingRiskLayer(map) {
   });
 }
 
-
-export function updateBuildingRiskFilter(map, riskClassFilter) {
+export function updateBuildingRiskFilter(
+  map,
+  riskClassFilter,
+  selectedDistricts = []
+) {
   if (!map || !map.getLayer("building-fill")) return;
 
+  const conditions = [];
   const allowedClasses = [];
 
+  // 1. Фильтр по району
+  if (selectedDistricts.length > 0) {
+    const districtFilterValues = selectedDistricts.map(
+      (district) => `${district} район`
+    );
+
+    conditions.push([
+      "in",
+      ["get", "district"],
+      ["literal", districtFilterValues],
+    ]);
+  }
+
+  // 2. Фильтр по классу риска
   if (riskClassFilter.showHighRisk) {
     allowedClasses.push("D", "E");
   }
@@ -58,22 +76,28 @@ export function updateBuildingRiskFilter(map, riskClassFilter) {
   }
 
   if (allowedClasses.length === 0) {
-    map.setFilter("building-fill", [
+    conditions.push([
       "==",
       ["get", "sri_class"],
       "__none__",
     ]);
-    return;
+  } else if (allowedClasses.length < 5) {
+    conditions.push([
+      "in",
+      ["get", "sri_class"],
+      ["literal", allowedClasses],
+    ]);
   }
 
-  if (allowedClasses.length === 5) {
-    map.setFilter("building-fill", null);
-    return;
-  }
+  map.setFilter(
+    "building-fill",
+    conditions.length > 0
+      ? ["all", ...conditions]
+      : null
+  );
 
-  map.setFilter("building-fill", [
-    "in",
-    ["get", "sri_class"],
-    ["literal", allowedClasses],
-  ]);
+  console.log("✅ Building filters applied:", {
+    districts: selectedDistricts,
+    riskClasses: allowedClasses,
+  });
 }
