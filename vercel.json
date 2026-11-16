@@ -1,0 +1,25 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/monitoring-seismic/static/:path*",
+      "destination": "/static/:path*"
+    },
+    {
+      "source": "/monitoring-seismic/icons/:path*",
+      "destination": "/icons/:path*"
+    },
+    {
+      "source": "/monitoring-seismic",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/monitoring-seismic/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/",
+      "destination": "/monitoring-seismic/"
+    }
+  ]
+}
