@@ -37,7 +37,7 @@ export const INITIAL_FILTERS = {
   riskLevels: {
     high: true,
     medium: true,
-    low: true,
+    // low: true,
   },
   categories: {
     mudflow: true,
