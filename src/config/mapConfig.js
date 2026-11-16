@@ -48,7 +48,7 @@ export const INITIAL_FILTERS = {
 
 export const INITIAL_BUILDING_RISK_FILTER = {
   showHighRisk: true,
-  showLowRisk: true,
+  showLowRisk: false,
 };
 
 export const INITIAL_ENGINEERING_NODES = {
