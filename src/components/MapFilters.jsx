@@ -167,21 +167,21 @@ export default function MapFilters({
     //       },
     //     ]
     //   : []),
-    ...(enginNodes && setEnginNodes
-      ? [
-          {
-            id: "engineering",
-            title: "Инженерные узлы:",
-            options: Object.entries(enginNodes).map(([key, enabled]) => ({
-              key,
-              label: ENGINEERING_LABELS[key] ?? key,
-              checked: enabled,
-              onChange: (checked) =>
-                setEnginNodes((prev) => ({ ...prev, [key]: checked })),
-            })),
-          },
-        ]
-      : []),
+    // ...(enginNodes && setEnginNodes
+    //   ? [
+    //       {
+    //         id: "engineering",
+    //         title: "Инженерные узлы:",
+    //         options: Object.entries(enginNodes).map(([key, enabled]) => ({
+    //           key,
+    //           label: ENGINEERING_LABELS[key] ?? key,
+    //           checked: enabled,
+    //           onChange: (checked) =>
+    //             setEnginNodes((prev) => ({ ...prev, [key]: checked })),
+    //         })),
+    //       },
+    //     ]
+    //   : []),
     ...(socialCategories && setSocialCategories
       ? [
           {

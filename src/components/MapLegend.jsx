@@ -176,7 +176,7 @@ function SeismicStatistics() {
       <div className="grid grid-cols-2 gap-2 mt-4">
         <div className="border border-gray-200 rounded-xl p-2 text-center shadow-sm bg-white">
           <div className="text-lg font-bold text-red-600">
-            {formatNumber(2834)}
+            {formatNumber(2321)}
           </div>
           <div className="text-[10px] sm:text-[11px] text-gray-500 leading-tight">
             Несейсмостойкие
