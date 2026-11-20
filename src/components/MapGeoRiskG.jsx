@@ -26,14 +26,23 @@ export default function GeoRiskMapDashboard({
 
   const PBF_BASE_URL =
     "https://admin.smartalmaty.kz/api/v1/address/postgis/geo-risk-tile/{z}/{x}/{y}.pbf";
-
+  
   const buildDistrictQuery = useCallback(() => {
+    const params = new URLSearchParams();
+
+    params.set("GRI_class", "высокий,средний");
+
     if (filters.districts.length > 0) {
-      const districtList = filters.districts.map((d) => `${d} район`).join(",");
-      return `?district=${encodeURIComponent(districtList)}`;
+      const districts = filters.districts
+        .map((d) => `${d} район`)
+        .join(",");
+
+      params.set("district", districts);
     }
-    return "";
+
+    return `?${params.toString()}`;
   }, [filters.districts]);
+
 
   const [, setStats] = useState({
     totalAreas: 0,
@@ -294,13 +303,9 @@ export default function GeoRiskMapDashboard({
   const addGeoStructLayers = useCallback(
     (map) => {
       console.log(
-        "🏗️ addGeoStructLayers called, styleLoaded:",
+        "addGeoStructLayers called, styleLoaded:",
         map.isStyleLoaded()
       );
-      // if (!map.isStyleLoaded()) {
-      //   console.log("❌ Style not loaded, cannot add layers");
-      //   return false;
-      // }
 
       let hasSource = false;
       try {
@@ -349,7 +354,7 @@ export default function GeoRiskMapDashboard({
             ],
             paint: {
               "fill-color": "#ff6b35",
-              "fill-opacity": 0.5,
+              "fill-opacity": 0.22,
             },
           });
         } catch (e) {
@@ -381,16 +386,53 @@ export default function GeoRiskMapDashboard({
               "line-color": [
                 "match",
                 ["get", "category"],
-                "сель",
-                "#00b4d8",
-                "разломы",
-                "#ff6b35",
-                "оползни",
-                "#ffa500",
+                "сель", "#00b4d8",
+                "разломы", "#ff6b35",
+                "оползни", "#ffa500",
                 "#888",
               ],
-              "line-width": 3,
-              "line-opacity": 0.8,
+
+              "line-width": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                9,
+                [
+                  "match",
+                  ["get", "category"],
+                  "сель", 1.0,
+                  "разломы", 1.0,
+                  "оползни", 1.0,
+                  1.0
+                ],
+                12,
+                [
+                  "match",
+                  ["get", "category"],
+                  "сель", 1.4,
+                  "разломы", 1.4,
+                  "оползни", 1.3,
+                  1.2
+                ],
+                15,
+                [
+                  "match",
+                  ["get", "category"],
+                  "сель", 2.0,
+                  "разломы", 1.8,
+                  "оползни", 1.6,
+                  1.5
+                ]
+              ],
+
+              "line-opacity": [
+                "match",
+                ["get", "category"],
+                "сель", 0.35,
+                "разломы", 0.35,
+                "оползни", 0.4,
+                0.35
+              ],
             },
           });
         } catch (e) {
@@ -415,11 +457,18 @@ export default function GeoRiskMapDashboard({
             source: "geoStruct",
             filter: ["==", ["geometry-type"], "Point"],
             paint: {
-              "circle-radius": 8,
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                9, 3,
+                12, 5,
+                15, 6
+              ],
               "circle-color": "#ffa500",
-              "circle-stroke-width": 2,
-              "circle-stroke-color": "#fff",
-              "circle-opacity": 0.85,
+              "circle-stroke-width": 0.8,
+              "circle-stroke-color": "#ffffff",
+              "circle-opacity": 0.6,
             },
           });
         } catch (e) {
@@ -428,6 +477,15 @@ export default function GeoRiskMapDashboard({
       }
 
       console.log("🎨 GeoStruct layers added/verified");
+      [
+        "registry-fill",
+        "registry-lines",
+        "registry-points",
+      ].forEach((id) => {
+        if (map.getLayer(id)) {
+          map.moveLayer(id);
+        }
+      });
       return true;
     },
     [geoData]
@@ -575,7 +633,7 @@ export default function GeoRiskMapDashboard({
               ["get", "color_GRI"],
               "#33a456",
             ],
-            "fill-opacity": 0.6,
+            "fill-opacity": 0.3,
           },
         },
         firstGeoStructLayer

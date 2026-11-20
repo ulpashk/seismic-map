@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { updateInfrastructureLayers } from "./layers/infrastructureLayers";
+// import {
+//   addBuildingRiskLayer,
+//   updateBuildingRiskFilter,
+// } from "./layers/buildingRiskLayer";
 import {
-  addBuildingRiskLayer,
-  updateBuildingRiskFilter,
-} from "./layers/buildingRiskLayer";
+  addSeismicRegistryLayer,
+  updateSeismicRegistryDistricts,
+} from "./layers/seismicRegistryLayer";
 import MapGeoRisk from "./components/MapGeoRiskG";
 import MapFilters from "./components/MapFilters";
 import useSeismicFilters from "./hooks/useSeismicFilters";
@@ -42,46 +46,84 @@ export default function SeismicMapDashboard() {
   const infrastructureOverlayRef = useRef(null);
   const [infrastructureReady, setInfrastructureReady] = useState(false);
 
+  // const handleMapReady = useCallback((map, overlay) => {
+  //   mapRef.current = map;
+  //   infrastructureOverlayRef.current = overlay;
+  //   setInfrastructureReady(true);
+
+  //   const tryAddBuildingLayer = () => {
+  //     if (map.getLayer("building-fill")) return;
+
+  //     addBuildingRiskLayer(map);
+
+  //     if (map.getLayer("building-fill")) {
+  //       const currentFilters = buildingFiltersRef.current;
+
+  //       updateBuildingRiskFilter(
+  //         map,
+  //         currentFilters.riskClassFilter,
+  //         currentFilters.districts
+  //       );
+
+  //       console.log("✅ Building risk source added");
+  //     }
+  //   };
+
+  //   tryAddBuildingLayer();
+
+  //   map.on("style.load", tryAddBuildingLayer);
+
+  //   map.once("remove", () => {
+  //     map.off("style.load", tryAddBuildingLayer);
+  //     mapRef.current = null;
+  //     infrastructureOverlayRef.current = null;
+  //   });
+  // }, []);
+
+
   const handleMapReady = useCallback((map, overlay) => {
     mapRef.current = map;
     infrastructureOverlayRef.current = overlay;
     setInfrastructureReady(true);
 
-    const tryAddBuildingLayer = () => {
-      if (map.getLayer("building-fill")) return;
+    const tryAddRegistryLayer = () => {
+      if (!map.isStyleLoaded()) return;
 
-      addBuildingRiskLayer(map);
-
-      if (map.getLayer("building-fill")) {
-        const currentFilters = buildingFiltersRef.current;
-
-        updateBuildingRiskFilter(
-          map,
-          currentFilters.riskClassFilter,
-          currentFilters.districts
-        );
-
-        console.log("✅ Building risk source added");
-      }
+      addSeismicRegistryLayer(map);
+      updateSeismicRegistryDistricts(
+        map,
+        buildingFiltersRef.current.districts
+      );
     };
 
-    tryAddBuildingLayer();
+    tryAddRegistryLayer();
 
-    map.on("style.load", tryAddBuildingLayer);
+    map.on("style.load", tryAddRegistryLayer);
 
     map.once("remove", () => {
-      map.off("style.load", tryAddBuildingLayer);
+      map.off("style.load", tryAddRegistryLayer);
       mapRef.current = null;
       infrastructureOverlayRef.current = null;
     });
   }, []);
 
+
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.getLayer("building-fill")) return;
 
-    updateBuildingRiskFilter(map, riskClassFilter, filters.districts);
-  }, [riskClassFilter, filters.districts]);
+    if (!map || !map.getSource("seismic-registry")) return;
+
+    updateSeismicRegistryDistricts(map, filters.districts);
+  }, [filters.districts]);
+
+
+
+  // useEffect(() => {
+  //   const map = mapRef.current;
+  //   if (!map || !map.getLayer("building-fill")) return;
+
+  //   updateBuildingRiskFilter(map, riskClassFilter, filters.districts);
+  // }, [riskClassFilter, filters.districts]);
 
   useEffect(() => {
     if (!infrastructureReady) return;

@@ -143,30 +143,30 @@ export default function MapFilters({
         onChange: () => toggleRiskLevel(key),
       })),
     },
-    ...(riskClassFilter && setRiskClassFilter
-      ? [
-          {
-            id: "buildingRisk",
-            title: "Класс риска зданий:",
-            options: [
-              {
-                key: "showHighRisk",
-                label: "Высокий риск (D, E)",
-                checked: riskClassFilter.showHighRisk,
-                onChange: (checked) =>
-                  setRiskClassFilter((prev) => ({ ...prev, showHighRisk: checked })),
-              },
-              {
-                key: "showLowRisk",
-                label: "Низкий риск (A, B, C)",
-                checked: riskClassFilter.showLowRisk,
-                onChange: (checked) =>
-                  setRiskClassFilter((prev) => ({ ...prev, showLowRisk: checked })),
-              },
-            ],
-          },
-        ]
-      : []),
+    // ...(riskClassFilter && setRiskClassFilter
+    //   ? [
+    //       {
+    //         id: "buildingRisk",
+    //         title: "Класс риска зданий:",
+    //         options: [
+    //           {
+    //             key: "showHighRisk",
+    //             label: "Высокий риск (D, E)",
+    //             checked: riskClassFilter.showHighRisk,
+    //             onChange: (checked) =>
+    //               setRiskClassFilter((prev) => ({ ...prev, showHighRisk: checked })),
+    //           },
+    //           {
+    //             key: "showLowRisk",
+    //             label: "Низкий риск (A, B, C)",
+    //             checked: riskClassFilter.showLowRisk,
+    //             onChange: (checked) =>
+    //               setRiskClassFilter((prev) => ({ ...prev, showLowRisk: checked })),
+    //           },
+    //         ],
+    //       },
+    //     ]
+    //   : []),
     ...(enginNodes && setEnginNodes
       ? [
           {

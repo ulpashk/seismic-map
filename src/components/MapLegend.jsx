@@ -239,9 +239,9 @@ export default function MapLegend({
         <div className="px-3 pb-3">
           <div className="max-h-[50vh] overflow-y-auto pr-1">
             <LegendSection title="Уровень риска">
-              <div className="w-full h-3 rounded bg-gradient-to-r from-green-500 via-yellow-500 to-red-500" />
+              <div className="w-full h-3 rounded bg-gradient-to-r from-yellow-400 to-red-500" />
               <div className="flex justify-between text-[10px] text-gray-600">
-                <span>Низкий</span>
+                <span>Средний</span>
                 <span>Высокий</span>
               </div>
             </LegendSection>
@@ -266,18 +266,16 @@ export default function MapLegend({
               </div>
             </LegendSection>
 
-            <LegendSection title="Риск зданий">
-              {buildingLegend.map((item) => (
-                <div key={item.label} className="flex items-start gap-2">
-                  <span
-                    className="w-3.5 h-3.5 mt-0.5 rounded-sm shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-[11px] leading-snug text-gray-700">
-                    {item.label}
-                  </span>
-                </div>
-              ))}
+            <LegendSection title="Здания">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-3.5 h-3.5 rounded-sm shrink-0"
+                  style={{ backgroundColor: "#B51F45" }}
+                />
+                <span className="text-[11px] leading-snug text-gray-700">
+                  Несейсмостойкие здания
+                </span>
+              </div>
             </LegendSection>
 
             {selectedEngin.length > 0 && (
