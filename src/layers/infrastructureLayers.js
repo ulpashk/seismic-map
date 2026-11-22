@@ -62,6 +62,23 @@ async function getCachedData(cacheKey, url) {
   }
 }
 
+// Подсчёт количества социальных объектов по категориям.
+// Используются те же данные API, что и для отображения иконок.
+// Количество не зависит от включённых чекбоксов.
+export async function getSocialCategoryCounts() {
+  const socialData = await getCachedData("social", URLS.social);
+
+  return socialData.features.reduce((counts, feature) => {
+    const category = feature.properties?.category;
+
+    if (category) {
+      counts[category] = (counts[category] || 0) + 1;
+    }
+
+    return counts;
+  }, {});
+}
+
 async function createSocialLayer(socialCategories) {
   const selectedCategories = Object.entries(
     socialCategories || {}
@@ -108,6 +125,7 @@ function createMarkerPoint(feature) {
         feature.properties?.id,
         error
       );
+
       return null;
     }
   }

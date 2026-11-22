@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getSocialCategoryCounts } from "../layers/infrastructureLayers";
 
 const CATEGORY_LABELS = {
   mudflow: "Сели",
@@ -59,6 +60,24 @@ function FilterSection({ section, expanded, onToggle }) {
       {expanded && (
         <div className="space-y-0.5 pb-3">
           {section.options.map((option) => (
+            option.isInfo ? (
+              <div
+                key={option.key}
+                className="flex items-center justify-between gap-2 rounded p-1 text-[10px] sm:text-xs"
+              >
+                <span className="pl-5">
+                  <span className="mr-1 text-gray-400">|</span>
+                  {option.label}
+                </span>
+                <span className="ml-auto shrink-0 text-gray-500 tabular-nums">
+                  {option.count === null
+                    ? "…"
+                    : typeof option.count === "number"
+                      ? option.count.toLocaleString("ru-RU")
+                      : option.count}
+                </span>
+              </div>
+            ) : (
             <label
               key={option.key}
               className="flex cursor-pointer items-center gap-2 rounded p-1 text-[10px] hover:bg-gray-50 sm:text-xs"
@@ -69,12 +88,17 @@ function FilterSection({ section, expanded, onToggle }) {
                 onChange={(event) => option.onChange(event.target.checked)}
                 className="h-3 w-3 shrink-0 accent-blue-600"
               />
-              <span className="min-w-0 break-words">
+              <span className="min-w-0 flex-1 break-words">
                 <span className="mr-1 text-gray-400">|</span>
                 {option.label}
               </span>
+              {option.count !== undefined && (
+                <span className="ml-auto shrink-0 text-gray-500 tabular-nums">
+                  {option.count === null ? "…" : option.count.toLocaleString("ru-RU")}
+                </span>
+              )}
             </label>
-          ))}
+          )))}
         </div>
       )}
     </section>
@@ -97,6 +121,23 @@ export default function MapFilters({
 }) {
   const [filtersHidden, setFiltersHidden] = useState(false);
   const [districtDropdownOpen, setDistrictDropdownOpen] = useState(false);
+  const [socialCounts, setSocialCounts] = useState(null);
+
+  useEffect(() => {
+    if (!socialCategories) return;
+
+    let active = true;
+    getSocialCategoryCounts()
+      .then((counts) => {
+        if (active) setSocialCounts(counts);
+      })
+      .catch((error) => {
+        console.error("Failed to load social object counts:", error);
+        if (active) setSocialCounts({ __error: true });
+      });
+
+    return () => { active = false; };
+  }, [Boolean(socialCategories)]);
   const [openSections, setOpenSections] = useState({
     categories: true,
     riskLevels: true,
@@ -121,6 +162,19 @@ export default function MapFilters({
   const toggleSection = (id) => {
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+
+  const otherSocialCount =
+    socialCounts && !socialCounts.__error
+      ? Math.max(
+          0,
+          2321 -
+            Object.keys(socialCategories || {}).reduce(
+              (sum, key) => sum + (socialCounts[key] || 0),
+              0
+            )
+        )
+      : null;
 
   const sections = [
     {
@@ -187,13 +241,30 @@ export default function MapFilters({
           {
             id: "social",
             title: "Социальные объекты:",
-            options: Object.entries(socialCategories).map(([key, enabled]) => ({
-              key,
-              label: SOCIAL_LABELS[key] ?? key,
-              checked: enabled,
-              onChange: (checked) =>
-                setSocialCategories((prev) => ({ ...prev, [key]: checked })),
-            })),
+            options: [
+              ...Object.entries(socialCategories).map(([key, enabled]) => ({
+                key,
+                label: SOCIAL_LABELS[key] ?? key,
+                count:
+                  socialCounts === null
+                    ? null
+                    : socialCounts.__error
+                      ? "—"
+                      : (socialCounts[key] ?? 0),
+                checked: enabled,
+                onChange: (checked) =>
+                  setSocialCategories((prev) => ({
+                    ...prev,
+                    [key]: checked,
+                  })),
+              })),
+              {
+                key: "other",
+                label: "Другие",
+                count: otherSocialCount,
+                isInfo: true,
+              },
+            ],
           },
         ]
       : []),

@@ -38,36 +38,64 @@ const populationStats = [
 const formatNumber = (value) =>
   new Intl.NumberFormat("ru-RU").format(value);
 
-function useSeismicStatistics() {
+
+function useSeismicStatistics(selectedDistricts = []) {
   const [stats, setStats] = useState({
     total: null,
     loading: true,
     error: null,
   });
 
+  const districtsKey = JSON.stringify(selectedDistricts);
+
   useEffect(() => {
     const controller = new AbortController();
+    const districts = JSON.parse(districtsKey);
+
+    setStats({
+      total: null,
+      loading: true,
+      error: null,
+    });
 
     async function fetchStats() {
       try {
-        const response = await fetch(
-          `${SEISMIC_API}?limit=1`,
-          { signal: controller.signal }
-        );
+        const getCount = async (district) => {
+          const params = new URLSearchParams();
+          params.set("limit", "1");
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+          if (district) {
+            params.set("district", `${district} район`);
+          }
 
-        const data = await response.json();
+          const response = await fetch(
+            `${SEISMIC_API}?${params.toString()}`,
+            { signal: controller.signal }
+          );
 
-        if (typeof data.count !== "number") {
-          throw new Error("API не вернул поле count");
-        }
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (typeof data.count !== "number") {
+            throw new Error("API не вернул поле count");
+          }
+
+          return data.count;
+        };
+
+        // Все районы — общий count
+        // Выбранные районы — сумма count каждого района
+        const counts =
+          districts.length === 0
+            ? [await getCount(null)]
+            : await Promise.all(districts.map(getCount));
 
         if (!controller.signal.aborted) {
           setStats({
-            total: data.count,
+            total: counts.reduce((sum, count) => sum + count, 0),
             loading: false,
             error: null,
           });
@@ -88,11 +116,76 @@ function useSeismicStatistics() {
     fetchStats();
 
     return () => controller.abort();
-  }, []);
+  }, [districtsKey]);
 
   return stats;
 }
 
+const REGISTRY_STATS_API =
+  "https://admin.smartalmaty.kz/api/v1/chs/seismic-registry/stats/";
+
+function useRegistryStatistics() {
+  const [registryStats, setRegistryStats] = useState({
+    data: null,
+    loading: true,
+    error: null,
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadRegistryStatistics() {
+      try {
+        const response = await fetch(REGISTRY_STATS_API, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        if (typeof data.total !== "number" || !Array.isArray(data.by_district)) {
+          throw new Error("Неверный формат статистики реестра");
+        }
+
+        if (!controller.signal.aborted) {
+          setRegistryStats({ data, loading: false, error: null });
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("Registry statistics:", error);
+        setRegistryStats({ data: null, loading: false, error: error.message });
+      }
+    }
+
+    loadRegistryStatistics();
+    return () => controller.abort();
+  }, []);
+
+  return registryStats;
+}
+
+function getRegistryCount(data, selectedDistricts = []) {
+  if (!data) return null;
+  if (selectedDistricts.length === 0) return data.total;
+
+  // В фильтрах имена могут передаваться с суффиксом «район» или без него.
+  const normalizeDistrict = (name) =>
+    String(name).trim().toLowerCase().replace(/\s+район\s*$/, "").replace(/ё/g, "е");
+
+  const countByDistrict = new Map(
+    data.by_district.map(({ district, count }) => [
+      normalizeDistrict(district),
+      count,
+    ])
+  );
+
+  const counts = selectedDistricts.map((district) =>
+    countByDistrict.get(normalizeDistrict(district))
+  );
+
+  // Не показываем некорректную сумму, если название района не найдено в API.
+  if (counts.some((count) => typeof count !== "number")) return null;
+  return counts.reduce((sum, count) => sum + count, 0);
+}
 
 const iconBase = `${process.env.PUBLIC_URL || ""}/icons/`;
 
@@ -141,8 +234,10 @@ function IconLegendItem({ item }) {
 }
 
 
-function SeismicStatistics() {
-  const stats = useSeismicStatistics();
+function SeismicStatistics({ selectedDistricts = [] }) {
+  const stats = useSeismicStatistics(selectedDistricts);
+  const registryStats = useRegistryStatistics();
+  const registryCount = getRegistryCount(registryStats.data, selectedDistricts);
 
   const displayValue = (value) => {
     if (stats.loading) return "…";
@@ -176,7 +271,7 @@ function SeismicStatistics() {
       <div className="grid grid-cols-2 gap-2 mt-4">
         <div className="border border-gray-200 rounded-xl p-2 text-center shadow-sm bg-white">
           <div className="text-lg font-bold text-red-600">
-            {formatNumber(2321)}
+            {registryStats.loading ? "…" : registryCount === null ? "—" : formatNumber(registryCount)}
           </div>
           <div className="text-[10px] sm:text-[11px] text-gray-500 leading-tight">
             Несейсмостойкие
@@ -193,6 +288,12 @@ function SeismicStatistics() {
         </div>
       </div>
 
+      {registryStats.error && (
+        <p className="text-[10px] text-red-600 mt-2">
+          Не удалось загрузить количество несейсмостойких зданий.
+        </p>
+      )}
+
       {stats.error && (
         <p className="text-[10px] text-red-600 mt-2">
           Не удалось получить статистику. Проверь фильтрацию API.
@@ -206,6 +307,7 @@ export default function MapLegend({
   enginNodes = {},
   socialCategories = {},
   riskClassFilter,
+  selectedDistricts = [],
 }) {
   const selectedSocial = socialLegend.filter(
     (item) => socialCategories[item.key]
@@ -294,7 +396,7 @@ export default function MapLegend({
               </LegendSection>
             )}
           </div>
-          <SeismicStatistics />
+          <SeismicStatistics selectedDistricts={selectedDistricts} />
         </div>
       )}
     </div>

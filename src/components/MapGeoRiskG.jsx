@@ -258,6 +258,101 @@ export default function GeoRiskMapDashboard({
         "✅ Map initialized, waiting for geostructures to load first"
       );
     });
+  
+    const getFeaturesAtPoint = (point, layerId) => {
+      if (!map.getLayer(layerId)) return [];
+      return map.queryRenderedFeatures(point, { layers: [layerId] });
+    };
+
+    // Only buildings from the seismic registry; no building-risk tile.
+    const getBuildingsAtPoint = (point) => {
+      if (!map.getSource("seismic-registry")) return [];
+      return map.queryRenderedFeatures(point).filter(
+        (feature) => feature.source === "seismic-registry"
+      );
+    };
+
+    const handleMapClick = (e) => {
+      const buildings = getBuildingsAtPoint(e.point);
+
+      if (buildings.length > 0) {
+        const props = buildings[0].properties || {};
+        console.log("🏢 Building properties:", props);
+
+        const content = document.createElement("div");
+        content.style.padding = "8px";
+
+        const title = document.createElement("h3");
+        title.textContent = "Информация о здании";
+        title.style.fontWeight = "bold";
+        content.appendChild(title);
+
+        [
+          ["Адрес", [props.street, props.house].filter(Boolean).join(", ") || props.address || "Не указан"],
+          ["Район", props.district || "Не указан"],
+          // ["Этажность", props.floors || "Не указана"],
+          // ["Год постройки", props.year || "Не указан"],
+          // ["Оценка состояния", props.evaluation || "Не указана"],
+          ["Тип здания", props.subcategory || "Не указан"],
+        ].forEach(([label, value]) => {
+          const row = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          row.append(strong, document.createTextNode(String(value)));
+          content.appendChild(row);
+        });
+
+        new maplibregl.Popup({ maxWidth: "320px" })
+          .setLngLat(e.lngLat)
+          .setDOMContent(content)
+          .addTo(map);
+
+        return;
+      }
+
+      const geoRisk = getFeaturesAtPoint(e.point, "geoRisk-fill");
+
+      if (geoRisk.length > 0) {
+        const props = geoRisk[0].properties || {};
+
+        const content = document.createElement("div");
+        content.style.padding = "8px";
+
+        const heading = document.createElement("h3");
+        heading.textContent = "Геориск";
+        heading.style.fontWeight = "bold";
+        content.appendChild(heading);
+
+        [
+          ["Класс риска", props.GRI_class || "Не указан"],
+          ["Район", props.district || "Не указан"],
+        ].forEach(([label, value]) => {
+          const row = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          row.append(strong, document.createTextNode(String(value)));
+          content.appendChild(row);
+        });
+
+        new maplibregl.Popup()
+          .setLngLat(e.lngLat)
+          .setDOMContent(content)
+          .addTo(map);
+      }
+    };
+
+    const handleMapHover = (e) => {
+      const buildings = getBuildingsAtPoint(e.point);
+      const geoRisk = getFeaturesAtPoint(e.point, "geoRisk-fill");
+
+      map.getCanvas().style.cursor =
+        buildings.length > 0 || geoRisk.length > 0
+          ? "pointer"
+          : "";
+    };
+
+    map.on("click", handleMapClick);
+    map.on("mousemove", handleMapHover);
 
     return () => {
       if (mapRef.current) {
@@ -616,8 +711,6 @@ export default function GeoRiskMapDashboard({
         ? "struct-lines"
         : map.getLayer("struct-points")
         ? "struct-points"
-        : map.getLayer("building-fill")
-        ? "building-fill"
         : undefined;
 
       map.addLayer(
@@ -638,40 +731,6 @@ export default function GeoRiskMapDashboard({
         },
         firstGeoStructLayer
       );
-
-      map.on("click", "geoRisk-fill", (e) => {
-        if (e.features && e.features.length > 0) {
-          const props = e.features[0].properties;
-          // Debug: log all properties to find correct field names
-          console.log("🏠 Clicked feature properties:", props);
-          console.log("🏠 All property keys:", Object.keys(props));
-
-          new maplibregl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(
-              `
-              <div style="padding: 8px;">
-                <h3 style="margin: 0 0 8px 0; font-weight: bold;">Геориск</h3>
-                <p style="margin: 4px 0;"><strong>Класс риска:</strong> ${
-                  props.GRI_class || "N/A"
-                }</p>
-                <p style="margin: 4px 0;"><strong>Район:</strong> ${
-                  props.district || "N/A"
-                }</p>
-              </div>
-            `
-            )
-            .addTo(map);
-        }
-      });
-
-      map.on("mouseenter", "geoRisk-fill", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-
-      map.on("mouseleave", "geoRisk-fill", () => {
-        map.getCanvas().style.cursor = "";
-      });
 
       const endTime = performance.now();
       console.log(
@@ -918,6 +977,7 @@ console.log("🔍 GeoRisk diagnostics:", {
         enginNodes={enginNodes}
         socialCategories={socialCategories}
         riskClassFilter={riskClassFilter}
+        selectedDistricts={filters.districts}
       />
     </div>
   );

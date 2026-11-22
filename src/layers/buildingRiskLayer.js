@@ -6,7 +6,7 @@ const BUILDING_TILE_URL =
   "https://admin.smartalmaty.kz/api/v1/address/clickhouse/building-risk-tile/{z}/{x}/{y}.pbf";
 
 export function addBuildingRiskLayer(map) {
-  if (!map || !map.isStyleLoaded()) return;
+  if (!map || !map.getStyle()) return;
 
   if (!map.getSource(BUILDING_SOURCE_ID)) {
     map.addSource(BUILDING_SOURCE_ID, {
